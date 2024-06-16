@@ -20,3 +20,10 @@
 # Go workspace file
 go.work
 go.work.sum
+
+
+
+data/trade_books/equity/*.csv
+data/trade_books/mutual_funds/*.csv
+data/trends/equity/*.json
+data/trends/mutual_funds/*.json
