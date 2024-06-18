@@ -2,6 +2,8 @@ package utils
 
 import (
 	"encoding/csv"
+	"encoding/json"
+	"net/http"
 	"os"
 	"strings"
 )
@@ -33,4 +35,11 @@ func ReadCSV(tradeFiles []string) ([][]string, error) {
 		tradeFilesCombined = append(tradeFilesCombined, k...)
 	}
 	return tradeFilesCombined, nil
+}
+
+func RespondWithJSON(w http.ResponseWriter, status int, payload interface{}) {
+	response, _ := json.Marshal(payload)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	w.Write(response)
 }

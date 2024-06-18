@@ -15,7 +15,7 @@ type TradePoint struct {
 	TradeType TradeType
 }
 
-type MoneyControlRequest struct {
+type MoneyControlResponse struct {
 	C []float32
 	H []float32
 	L []float32

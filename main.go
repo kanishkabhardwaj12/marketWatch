@@ -10,7 +10,21 @@ import (
 )
 
 func buildCache() error {
-	return tradebook_service.BuildTradeBook("./data/trade_books/mutual_funds/")
+	err := tradebook_service.BuildMFTradeBook("./data/trade_books/mutual_funds/")
+	if err != nil {
+		return err
+	}
+	err = tradebook_service.BuildEquityTradeBook("./data/trade_books/equity/")
+	if err != nil {
+		return err
+	}
+
+	err = tradebook_service.BuildPriceHistoryCacheFromFile()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func main() {

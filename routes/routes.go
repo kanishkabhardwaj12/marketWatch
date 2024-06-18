@@ -9,10 +9,9 @@ func SetupRouter() *mux.Router {
 	router := mux.NewRouter()
 
 	router.HandleFunc("/api/trend", handlers.GetTrend).Methods("GET")
-	router.HandleFunc("/api/mutual_funds", handlers.GetMutualFundsList).Methods("GET")
-	// router.HandleFunc("/api/users", handlers.CreateUser).Methods("POST")
-	// router.HandleFunc("/api/users/{id}", handlers.UpdateUser).Methods("PUT")
-	// router.HandleFunc("/api/users/{id}", handlers.DeleteUser).Methods("DELETE")
+	router.HandleFunc("/api/mutual_funds/list", handlers.GetMutualFundsList).Methods("GET")
+	router.HandleFunc("/api/equity/list", handlers.GetEquityList).Methods("GET")
+	router.HandleFunc("/api/symbols/history/refresh", handlers.RefreshPriceHistory).Methods("POST")
 
 	return router
 }
