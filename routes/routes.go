@@ -9,6 +9,7 @@ func SetupRouter() *mux.Router {
 	router := mux.NewRouter()
 
 	router.HandleFunc("/api/trend", handlers.GetTrend).Methods("GET")
+	router.HandleFunc("/api/trend/compare", handlers.GetTrendComparison).Methods("GET")
 	router.HandleFunc("/api/mutual_funds/list", handlers.GetMutualFundsList).Methods("GET")
 	router.HandleFunc("/api/equity/list", handlers.GetEquityList).Methods("GET")
 	router.HandleFunc("/api/symbols/history/refresh", handlers.RefreshPriceHistory).Methods("POST")

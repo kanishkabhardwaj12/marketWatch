@@ -1,0 +1,624 @@
+{
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": {
+            "type": "grafana",
+            "uid": "-- Grafana --"
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "type": "dashboard"
+        }
+      ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 2,
+    "id": 1,
+    "links": [],
+    "liveNow": false,
+    "panels": [
+      {
+        "datasource": {
+          "type": "yesoreyeram-infinity-datasource",
+          "uid": "fdoszwy82lreod"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "fixedColor": "#ffffff",
+              "mode": "continuous-RdYlGr",
+              "seriesBy": "last"
+            },
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "drawStyle": "line",
+              "fillOpacity": 29,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "insertNulls": false,
+              "lineInterpolation": "smooth",
+              "lineWidth": 1,
+              "pointSize": 2,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "area"
+              }
+            },
+            "fieldMinMax": false,
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "dark-red",
+                  "value": null
+                },
+                {
+                  "color": "#73BF69",
+                  "value": 0
+                }
+              ]
+            },
+            "unit": "none"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 0
+        },
+        "id": 2,
+        "options": {
+          "legend": {
+            "calcs": [],
+            "displayMode": "list",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "tooltip": {
+            "maxHeight": 600,
+            "mode": "single",
+            "sort": "none"
+          }
+        },
+        "targets": [
+          {
+            "columns": [],
+            "datasource": {
+              "type": "yesoreyeram-infinity-datasource",
+              "uid": "fdoszwy82lreod"
+            },
+            "filters": [],
+            "format": "table",
+            "global_query_id": "",
+            "refId": "A",
+            "root_selector": "",
+            "source": "url",
+            "type": "json",
+            "url": "http://localhost:8080/api/trend/compare",
+            "url_options": {
+              "data": "",
+              "method": "GET",
+              "params": [
+                {
+                  "key": "symbol",
+                  "value": "$compare"
+                },
+                {
+                  "key": "from",
+                  "value": "${__from}"
+                },
+                {
+                  "key": "to",
+                  "value": "${__to}"
+                }
+              ]
+            }
+          }
+        ],
+        "title": "Ticker Candles Comparison",
+        "transformations": [
+          {
+            "id": "convertFieldType",
+            "options": {
+              "conversions": [
+                {
+                  "destinationType": "time",
+                  "targetField": "Timestamps"
+                }
+              ],
+              "fields": {}
+            }
+          },
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {
+                "Close": true,
+                "High": true,
+                "Low": true,
+                "Open": true,
+                "Volume": true
+              },
+              "includeByName": {},
+              "indexByName": {
+                "Close": 4,
+                "High": 1,
+                "Low": 2,
+                "Open": 3,
+                "Timestamps": 0,
+                "Volume": 5
+              },
+              "renameByName": {}
+            }
+          }
+        ],
+        "type": "timeseries"
+      },
+      {
+        "datasource": {
+          "type": "yesoreyeram-infinity-datasource",
+          "uid": "fdoszwy82lreod"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "drawStyle": "line",
+              "fillOpacity": 0,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "insertNulls": false,
+              "lineInterpolation": "linear",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 9,
+          "w": 24,
+          "x": 0,
+          "y": 8
+        },
+        "id": 1,
+        "options": {
+          "candleStyle": "candles",
+          "colorStrategy": "open-close",
+          "colors": {
+            "down": "red",
+            "up": "green"
+          },
+          "fields": {
+            "close": "Close",
+            "high": "High",
+            "low": "Low",
+            "open": "Open",
+            "volume": "Volume"
+          },
+          "includeAllFields": false,
+          "legend": {
+            "calcs": [],
+            "displayMode": "list",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "mode": "candles+volume"
+        },
+        "targets": [
+          {
+            "columns": [],
+            "datasource": {
+              "type": "yesoreyeram-infinity-datasource",
+              "uid": "fdoszwy82lreod"
+            },
+            "filters": [],
+            "format": "table",
+            "global_query_id": "",
+            "refId": "A",
+            "root_selector": "",
+            "source": "url",
+            "type": "json",
+            "url": "http://localhost:8080/api/trend",
+            "url_options": {
+              "data": "",
+              "method": "GET",
+              "params": [
+                {
+                  "key": "symbol",
+                  "value": "${Equity}"
+                },
+                {
+                  "key": "from",
+                  "value": "${__from}"
+                },
+                {
+                  "key": "to",
+                  "value": "${__to}"
+                }
+              ]
+            }
+          }
+        ],
+        "title": "Ticker Candles",
+        "transformations": [
+          {
+            "id": "convertFieldType",
+            "options": {
+              "conversions": [
+                {
+                  "destinationType": "time",
+                  "targetField": "Timestamps"
+                }
+              ],
+              "fields": {}
+            }
+          }
+        ],
+        "type": "candlestick"
+      },
+      {
+        "datasource": {
+          "type": "yesoreyeram-infinity-datasource",
+          "uid": "fdoszwy82lreod"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "fixedColor": "#ffffff",
+              "mode": "continuous-RdYlGr",
+              "seriesBy": "last"
+            },
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "drawStyle": "line",
+              "fillOpacity": 29,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "insertNulls": false,
+              "lineInterpolation": "smooth",
+              "lineWidth": 1,
+              "pointSize": 2,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "area"
+              }
+            },
+            "fieldMinMax": false,
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "dark-red",
+                  "value": null
+                },
+                {
+                  "color": "#73BF69",
+                  "value": 0
+                }
+              ]
+            },
+            "unit": "none"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 17
+        },
+        "id": 3,
+        "options": {
+          "legend": {
+            "calcs": [],
+            "displayMode": "list",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "tooltip": {
+            "maxHeight": 600,
+            "mode": "single",
+            "sort": "none"
+          }
+        },
+        "targets": [
+          {
+            "columns": [],
+            "datasource": {
+              "type": "yesoreyeram-infinity-datasource",
+              "uid": "fdoszwy82lreod"
+            },
+            "filters": [],
+            "format": "table",
+            "global_query_id": "",
+            "refId": "A",
+            "root_selector": "",
+            "source": "url",
+            "type": "json",
+            "url": "http://localhost:8080/api/trend",
+            "url_options": {
+              "data": "",
+              "method": "GET",
+              "params": [
+                {
+                  "key": "symbol",
+                  "value": "${Equity}"
+                },
+                {
+                  "key": "from",
+                  "value": "${__from}"
+                },
+                {
+                  "key": "to",
+                  "value": "${__to}"
+                }
+              ]
+            }
+          }
+        ],
+        "title": "Ticker Candles ${Equity}",
+        "transformations": [
+          {
+            "id": "convertFieldType",
+            "options": {
+              "conversions": [
+                {
+                  "destinationType": "time",
+                  "targetField": "Timestamps"
+                }
+              ],
+              "fields": {}
+            }
+          },
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {
+                "Close": true,
+                "High": true,
+                "Low": true,
+                "Open": true,
+                "Volume": true
+              },
+              "includeByName": {},
+              "indexByName": {
+                "Close": 4,
+                "High": 1,
+                "Low": 2,
+                "Open": 3,
+                "Timestamps": 0,
+                "Volume": 5
+              },
+              "renameByName": {}
+            }
+          }
+        ],
+        "type": "timeseries"
+      }
+    ],
+    "schemaVersion": 39,
+    "tags": [],
+    "templating": {
+      "list": [
+        {
+          "current": {
+            "selected": false,
+            "text": "INF209KB1O82",
+            "value": "INF209KB1O82"
+          },
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "fdoszwy82lreod"
+          },
+          "definition": "yesoreyeram-infinity-datasource- (infinity) json",
+          "hide": 0,
+          "includeAll": false,
+          "label": "Mutual Funds",
+          "multi": false,
+          "name": "MF",
+          "options": [],
+          "query": {
+            "infinityQuery": {
+              "columns": [],
+              "filters": [],
+              "format": "table",
+              "refId": "variable",
+              "root_selector": "",
+              "source": "url",
+              "type": "json",
+              "url": "http://localhost:8080/api/mutual_funds/list",
+              "url_options": {
+                "data": "",
+                "method": "GET"
+              }
+            },
+            "query": "http://localhost:8080/api/mutual_funds",
+            "queryType": "infinity"
+          },
+          "refresh": 2,
+          "regex": "",
+          "skipUrlSync": false,
+          "sort": 1,
+          "type": "query"
+        },
+        {
+          "current": {
+            "selected": false,
+            "text": "ADANIENT",
+            "value": "ADANIENT"
+          },
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "fdoszwy82lreod"
+          },
+          "definition": "yesoreyeram-infinity-datasource- (infinity) json",
+          "hide": 0,
+          "includeAll": false,
+          "label": "Shares",
+          "multi": false,
+          "name": "Equity",
+          "options": [],
+          "query": {
+            "infinityQuery": {
+              "columns": [],
+              "filters": [],
+              "format": "table",
+              "refId": "variable",
+              "root_selector": "",
+              "source": "url",
+              "type": "json",
+              "url": "http://localhost:8080/api/equity/list",
+              "url_options": {
+                "data": "",
+                "method": "GET"
+              }
+            },
+            "query": "http://localhost:8080/api/mutual_funds",
+            "queryType": "infinity"
+          },
+          "refresh": 2,
+          "regex": "",
+          "skipUrlSync": false,
+          "sort": 1,
+          "type": "query"
+        },
+        {
+          "allValue": "",
+          "current": {
+            "selected": false,
+            "text": "ADANIENT",
+            "value": "ADANIENT"
+          },
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "fdoszwy82lreod"
+          },
+          "definition": "yesoreyeram-infinity-datasource- (infinity) json",
+          "hide": 0,
+          "includeAll": true,
+          "label": "compare",
+          "multi": true,
+          "name": "compare",
+          "options": [],
+          "query": {
+            "infinityQuery": {
+              "columns": [],
+              "filters": [],
+              "format": "table",
+              "refId": "variable",
+              "root_selector": "",
+              "source": "url",
+              "type": "json",
+              "url": "http://localhost:8080/api/equity/list",
+              "url_options": {
+                "data": "",
+                "method": "GET"
+              }
+            },
+            "query": "http://localhost:8080/api/mutual_funds",
+            "queryType": "infinity"
+          },
+          "refresh": 2,
+          "regex": "",
+          "skipUrlSync": false,
+          "sort": 1,
+          "type": "query"
+        }
+      ]
+    },
+    "time": {
+      "from": "now-1y",
+      "to": "now"
+    },
+    "timeRangeUpdatedDuringEditOrView": false,
+    "timepicker": {
+      "hidden": false
+    },
+    "timezone": "browser",
+    "title": "Ticker",
+    "uid": "ddot0etla44xsc",
+    "version": 24,
+    "weekStart": ""
+  }

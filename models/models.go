@@ -25,12 +25,13 @@ type MoneyControlResponse struct {
 }
 
 type CandlePoint struct {
-	Timestamps time.Time
-	Open       float32
-	Close      float32
-	High       float32
-	Low        float32
-	Volume     float32
+	Timestamps    time.Time
+	Open          float32
+	Close         float32
+	High          float32
+	Low           float32
+	Volume        float32
+	PercentChange float32
 }
 
 func NewTradePoint(price float32) *TradePoint {

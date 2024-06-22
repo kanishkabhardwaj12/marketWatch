@@ -48,7 +48,7 @@ type FundName string
 type ScriptName string
 
 type MutualFundsTradebook struct {
-	AllFunds             []FundName
+	AllFunds             map[FundName]string
 	MutualFundsTradebook map[FundName][]MutualFundsTrade
 }
 
@@ -62,17 +62,18 @@ var equityTradebook EquityTradebook
 
 var shareHistory = make(map[ScriptName][]models.CandlePoint)
 
-func readMFTradeFiles(tradebookDir string) (map[FundName][]MutualFundsTrade, error) {
+func readMFTradeFiles(tradebookDir string) (map[FundName][]MutualFundsTrade, map[FundName]string, error) {
 	// to remove duplidate trade ids
 	tradeSet := make(map[string]struct{})
+	allFunds := make(map[FundName]string)
 
 	tradeFiles, err := utils.ReadDir(tradebookDir)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	tradebookCSV, err := utils.ReadCSV(tradeFiles)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	tradebook := make(map[FundName][]MutualFundsTrade)
 	for _, record := range tradebookCSV {
@@ -89,6 +90,7 @@ func readMFTradeFiles(tradebookDir string) (map[FundName][]MutualFundsTrade, err
 		if _, ok := tradebook[symbol]; !ok {
 			tradebook[symbol] = []MutualFundsTrade{}
 		}
+		allFunds[symbol] = record[1]
 		tradebook[symbol] = append(tradebook[symbol], MutualFundsTrade{
 			Isin:               record[1],
 			TradeDate:          record[2],
@@ -105,7 +107,7 @@ func readMFTradeFiles(tradebookDir string) (map[FundName][]MutualFundsTrade, err
 		})
 
 	}
-	return tradebook, nil
+	return tradebook, allFunds, nil
 }
 
 func readEquityTradeFiles(tradebookDir string) (map[ScriptName][]EquityTrade, error) {
@@ -150,16 +152,12 @@ func readEquityTradeFiles(tradebookDir string) (map[ScriptName][]EquityTrade, er
 }
 
 func BuildMFTradeBook(tradebookDir string) error {
-	tradeMap, err := readMFTradeFiles(tradebookDir)
+	tradeMap, allFunds, err := readMFTradeFiles(tradebookDir)
 	if err != nil {
 		return err
 	}
-	var trickers []FundName
-	for fundName, _ := range tradeMap {
-		trickers = append(trickers, fundName)
-	}
 	mutualFundsTradebook.MutualFundsTradebook = tradeMap
-	mutualFundsTradebook.AllFunds = trickers
+	mutualFundsTradebook.AllFunds = allFunds
 	return nil
 }
 
@@ -280,7 +278,7 @@ func BuildPriceHistoryCacheFromFile() error {
 	return nil
 }
 
-func GetMutualFundsList() []FundName {
+func GetMutualFundsList() map[FundName]string {
 	return mutualFundsTradebook.AllFunds
 }
 
@@ -288,7 +286,78 @@ func GetEquityList() []ScriptName {
 	return equityTradebook.AllScripts
 }
 
-func GetPriceTrend(symbol string) []models.CandlePoint {
+func trendBinarySearch(timestamps []models.CandlePoint, target time.Time) int {
+	left, right := 0, len(timestamps)-1
+	nearestIndex := -1
+	minDiff := math.MaxInt64
 
-	return shareHistory[ScriptName(symbol)]
+	for left <= right {
+		mid := left + (right-left)/2
+
+		// Check if the target is present at mid
+		if timestamps[mid].Timestamps.Equal(target) {
+			return mid
+		}
+
+		// Update the nearest index if the current difference is smaller
+		diff := absDuration(timestamps[mid].Timestamps.Sub(target))
+		if diff < time.Duration(minDiff) {
+			minDiff = int(diff)
+			nearestIndex = mid
+		}
+
+		// If the target is greater, ignore the left half
+		if timestamps[mid].Timestamps.Before(target) {
+			left = mid + 1
+		} else {
+			// If the target is smaller, ignore the right half
+			right = mid - 1
+		}
+	}
+	return nearestIndex
+}
+
+// absDuration is a helper function to calculate the absolute value of a time.Duration.
+func absDuration(d time.Duration) time.Duration {
+	if d < 0 {
+		return -d
+	}
+	return d
+}
+
+func GetPriceTrendInTimeRange(symbol string, from, to time.Time) []models.CandlePoint {
+	if len(shareHistory[ScriptName(symbol)]) == 0 {
+		return nil
+	}
+	startIndex := trendBinarySearch(shareHistory[ScriptName(symbol)], from)
+	endIndex := trendBinarySearch(shareHistory[ScriptName(symbol)], to)
+
+	fmt.Println(symbol)
+	fmt.Println(startIndex, shareHistory[ScriptName(symbol)][startIndex])
+	fmt.Println(endIndex, shareHistory[ScriptName(symbol)][endIndex])
+
+	requestedRange := shareHistory[ScriptName(symbol)][startIndex:endIndex]
+	if len(requestedRange) == 0 {
+		return nil
+	}
+	startPrice := requestedRange[0].Close
+	for i, _ := range requestedRange {
+		requestedRange[i].PercentChange = ((requestedRange[i].Close - startPrice) / startPrice) * 100
+	}
+	return requestedRange
+}
+
+func GetGrowthComparison(symbols []string, from, to time.Time) map[string]map[time.Time]float32 {
+	growthMap := make(map[string]map[time.Time]float32)
+	for _, symbol := range symbols {
+		trend := GetPriceTrendInTimeRange(symbol, from, to)
+		fmt.Println("fetched for trend :", symbol)
+		fmt.Println("trend length : ", len(trend))
+		growthMap[symbol] = make(map[time.Time]float32)
+		for _, v := range trend {
+			growthMap[symbol][v.Timestamps] = v.PercentChange
+		}
+	}
+	fmt.Println("fetched all ")
+	return growthMap
 }
