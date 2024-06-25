@@ -7,6 +7,7 @@ import (
 	"math"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/Mryashbhardwaj/marketAnalysis/models"
@@ -239,20 +240,26 @@ func fetchTradeHistories(script ScriptName) ([]models.CandlePoint, error) {
 }
 
 func BuildPriceHistoryCache() error {
+	var errorList []string
 	for _, symbol := range equityTradebook.AllScripts {
 		history, err := fetchTradeHistories(symbol)
 		if err != nil {
 			fmt.Printf("error fetching history for %s, err:%s", symbol, err.Error())
+			errorList = append(errorList, fmt.Sprintf("error fetching history for %s, err:%s", symbol, err.Error()))
 			continue
 		}
 		shareHistory[symbol] = history
 		err = persistInFile(symbol, history)
 		if err != nil {
 			fmt.Printf("error persisting history for %s, err:%s", symbol, err.Error())
+			errorList = append(errorList, fmt.Sprintf("error persisting history for %s, err:%s", symbol, err.Error()))
 			continue
 		}
 	}
-	return nil
+	if len(errorList) == 0 {
+		return nil
+	}
+	return fmt.Errorf(strings.Join(errorList, "\n"))
 }
 
 func buildCacheFromFile(symbol ScriptName) ([]models.CandlePoint, error) {
@@ -278,8 +285,12 @@ func BuildPriceHistoryCacheFromFile() error {
 	return nil
 }
 
-func GetMutualFundsList() map[FundName]string {
-	return mutualFundsTradebook.AllFunds
+func GetMutualFundsList() []string {
+	var fundList []string
+	for fundName, insi := range mutualFundsTradebook.AllFunds {
+		fundList = append(fundList, fmt.Sprintf("%s:%s", fundName, insi))
+	}
+	return fundList
 }
 
 func GetEquityList() []ScriptName {
@@ -332,10 +343,6 @@ func GetPriceTrendInTimeRange(symbol string, from, to time.Time) []models.Candle
 	startIndex := trendBinarySearch(shareHistory[ScriptName(symbol)], from)
 	endIndex := trendBinarySearch(shareHistory[ScriptName(symbol)], to)
 
-	fmt.Println(symbol)
-	fmt.Println(startIndex, shareHistory[ScriptName(symbol)][startIndex])
-	fmt.Println(endIndex, shareHistory[ScriptName(symbol)][endIndex])
-
 	requestedRange := shareHistory[ScriptName(symbol)][startIndex:endIndex]
 	if len(requestedRange) == 0 {
 		return nil
@@ -347,17 +354,31 @@ func GetPriceTrendInTimeRange(symbol string, from, to time.Time) []models.Candle
 	return requestedRange
 }
 
-func GetGrowthComparison(symbols []string, from, to time.Time) map[string]map[time.Time]float32 {
-	growthMap := make(map[string]map[time.Time]float32)
+func GetGrowthComparison(symbols []string, from, to time.Time) []map[string]interface{} {
+	growthMap := make(map[time.Time]map[string]float32)
 	for _, symbol := range symbols {
 		trend := GetPriceTrendInTimeRange(symbol, from, to)
-		fmt.Println("fetched for trend :", symbol)
-		fmt.Println("trend length : ", len(trend))
-		growthMap[symbol] = make(map[time.Time]float32)
 		for _, v := range trend {
-			growthMap[symbol][v.Timestamps] = v.PercentChange
+			if _, ok := growthMap[v.Timestamps]; !ok {
+				growthMap[v.Timestamps] = make(map[string]float32)
+				for _, s := range symbols {
+					//  init empty value with 0 because some stocks might have started later in the requested time period
+					growthMap[v.Timestamps][s] = 0
+				}
+			}
+			growthMap[v.Timestamps][symbol] = v.PercentChange
 		}
 	}
-	fmt.Println("fetched all ")
-	return growthMap
+
+	response := make([]map[string]interface{}, len(growthMap))
+	index := 0
+	for timeStamp, mapSymbolToPrice := range growthMap {
+		response[index] = make(map[string]interface{})
+		for s, p := range mapSymbolToPrice {
+			response[index][s] = p
+		}
+		response[index]["time"] = timeStamp
+		index++
+	}
+	return response
 }

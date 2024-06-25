@@ -31,6 +31,7 @@ func main() {
 	err := buildCache()
 	if err != nil {
 		fmt.Println(err.Error())
+		return
 	}
 
 	router := routes.SetupRouter()
