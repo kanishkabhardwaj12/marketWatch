@@ -1,4 +1,4 @@
-package client
+package moneycontrol
 
 import (
 	"encoding/json"

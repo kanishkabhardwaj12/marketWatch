@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Mryashbhardwaj/marketAnalysis/core/client"
+	MC "github.com/Mryashbhardwaj/marketAnalysis/clients/moneyControl"
 	"github.com/Mryashbhardwaj/marketAnalysis/models"
 	"github.com/Mryashbhardwaj/marketAnalysis/utils"
 )
@@ -103,12 +103,12 @@ func persistInFile(symbol string, trend interface{}) error {
 	if err != nil {
 		return err
 	}
-	fileName := fmt.Sprintf("./data/trends/equity/%s.json", symbol)
+	fileName := fmt.Sprintf("./data/trends/EQ/%s.json", symbol)
 	return os.WriteFile(fileName, fileContent, os.ModePerm)
 }
 
 func fetchTradeHistories(script ScriptName) ([]models.EquityPriceData, error) {
-	k, err := client.GetEQHistoryFromMoneyControll(script.String())
+	k, err := MC.GetEQHistoryFromMoneyControll(script.String())
 	if err != nil {
 		return nil, err
 	}

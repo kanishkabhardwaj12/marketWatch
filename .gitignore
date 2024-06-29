@@ -22,8 +22,7 @@ go.work
 go.work.sum
 
 
-
-data/trade_books/equity/*.csv
-data/trade_books/mutual_funds/*.csv
-data/trends/equity/*.json
-data/trends/mutual_funds/*.json
+data/trade_books/EQ/*.csv
+data/trade_books/MF/*.csv
+data/trends/EQ/*.json
+data/trends/MF/*.json

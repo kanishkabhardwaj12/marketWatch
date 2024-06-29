@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/Mryashbhardwaj/marketAnalysis/core/client"
+	MC "github.com/Mryashbhardwaj/marketAnalysis/clients/moneyControl"
 	"github.com/Mryashbhardwaj/marketAnalysis/models"
 	"github.com/Mryashbhardwaj/marketAnalysis/utils"
 )
@@ -123,7 +123,7 @@ func persistMFInFile(symbol string, trend interface{}) error {
 func BuildMFPriceHistoryCache() error {
 	var errorList []string
 	for name, isin := range mutualFundsTradebook.AllFunds {
-		history, err := client.GetMFHistoryFromMoneyControll(string(isin))
+		history, err := MC.GetMFHistoryFromMoneyControll(string(isin))
 		if err != nil {
 			fmt.Printf("error fetching history for MF %s, err:%s", name, err.Error())
 			errorList = append(errorList, fmt.Sprintf("error fetching history for %s, err:%s", isin, err.Error()))
