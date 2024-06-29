@@ -4,6 +4,7 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"errors"
+	"math"
 	"net/http"
 	"os"
 	"strconv"
@@ -73,4 +74,47 @@ func RespondWithJSON(w http.ResponseWriter, status int, payload interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	w.Write(response)
+}
+
+type TimeGetter interface {
+	GetTime() time.Time
+}
+
+func MomentBinarySearch[V TimeGetter](timestamps []V, target time.Time) int {
+	left, right := 0, len(timestamps)-1
+	nearestIndex := -1
+	minDiff := math.MaxInt64
+
+	for left <= right {
+		mid := left + (right-left)/2
+
+		// Check if the target is present at mid
+		if timestamps[mid].GetTime().Equal(target) {
+			return mid
+		}
+
+		// Update the nearest index if the current difference is smaller
+		diff := absDuration(timestamps[mid].GetTime().Sub(target))
+		if diff < time.Duration(minDiff) {
+			minDiff = int(diff)
+			nearestIndex = mid
+		}
+
+		// If the target is greater, ignore the left half
+		if timestamps[mid].GetTime().Before(target) {
+			left = mid + 1
+		} else {
+			// If the target is smaller, ignore the right half
+			right = mid - 1
+		}
+	}
+	return nearestIndex
+}
+
+// absDuration is a helper function to calculate the absolute value of a time.Duration.
+func absDuration(d time.Duration) time.Duration {
+	if d < 0 {
+		return -d
+	}
+	return d
 }

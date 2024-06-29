@@ -1,9 +1,9 @@
-package tradebook_service
+package client
 
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"math"
 	"net/http"
 	"time"
@@ -31,7 +31,7 @@ func GetMFHistoryFromMoneyControll(isin string) ([]models.MFPriceData, error) {
 	}
 
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +49,7 @@ func GetMFHistoryFromMoneyControll(isin string) ([]models.MFPriceData, error) {
 	return priceHistory, err
 }
 
-func getFromMoneyControll(tickerSymbol ScriptName) (*models.MoneyControlResponse, error) {
+func GetEQHistoryFromMoneyControll(tickerSymbol string) (*models.MoneyControlResponse, error) {
 	startTime := time.Unix(490147200, 0)
 	endTime := time.Now()
 	durationSince := math.Ceil(endTime.Sub(startTime).Hours() / 24)
@@ -72,7 +72,7 @@ func getFromMoneyControll(tickerSymbol ScriptName) (*models.MoneyControlResponse
 	}
 
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
