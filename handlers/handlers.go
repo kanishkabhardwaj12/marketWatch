@@ -27,6 +27,15 @@ func GetTrend(w http.ResponseWriter, r *http.Request) {
 	utils.RespondWithJSON(w, 200, tradebook_service.GetPriceTrendInTimeRange(symbol, from, to))
 }
 
+func GetMFSummary(w http.ResponseWriter, r *http.Request) {
+	from, to, err := utils.GetTimeRange(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	utils.RespondWithJSON(w, 200, tradebook_service.GetMFSummmary(from, to))
+}
+
 func GetMFTrend(w http.ResponseWriter, r *http.Request) {
 	symbol := r.URL.Query().Get("symbol")
 	from, to, err := utils.GetTimeRange(r)

@@ -2,7 +2,8 @@ package tradebook_service
 
 import (
 	"fmt"
-	"strconv"
+	"log"
+	"math"
 	"time"
 
 	"github.com/Mryashbhardwaj/marketAnalysis/models"
@@ -56,6 +57,7 @@ func GetPriceTrendInTimeRange(symbol string, from, to time.Time) []models.Equity
 	}
 	return requestedRange
 }
+
 func GetPriceMFPositionsInTimeRange(symbol string, from, to time.Time) []models.MFHoldingsData {
 	requestedRange := mutualFundsTradebook.MutualFundsTradebook[ISIN(symbol)]
 	if len(requestedRange) == 0 {
@@ -66,37 +68,140 @@ func GetPriceMFPositionsInTimeRange(symbol string, from, to time.Time) []models.
 	totalUnitsHeld := float64(0)
 	for _, trade := range requestedRange {
 		var transaction float64
-		tradeTime, err := time.Parse(time.DateOnly, trade.TradeDate)
-		if err != nil {
-			fmt.Println(err.Error())
-		}
-
-		price, err := strconv.ParseFloat(trade.Price, 64)
-		if err != nil {
-			fmt.Println(err.Error())
-		}
-
-		quantity, err := strconv.ParseFloat(trade.Quantity, 64)
-		if err != nil {
-			fmt.Println(err.Error())
-		}
 		if trade.TradeType == "sell" {
-			totalValue -= price * quantity
-			totalUnitsHeld -= quantity
-			transaction = price * (-quantity)
+			totalValue -= trade.Price * trade.Quantity
+			totalUnitsHeld -= trade.Quantity
+			transaction = trade.Price * (-trade.Quantity)
 		} else {
-			totalValue += price * quantity
-			totalUnitsHeld += quantity
-			transaction = price * quantity
+			totalValue += trade.Price * trade.Quantity
+			totalUnitsHeld += trade.Quantity
+			transaction = trade.Price * trade.Quantity
 		}
 		holdings = append(holdings, models.MFHoldingsData{
-			Timestamps:     tradeTime,
+			Timestamps:     trade.TradeDate,
 			TotalValue:     totalValue,
-			TotalUnitsHeld: totalUnitsHeld,
+			TotalUnitsHeld: math.Ceil(totalUnitsHeld),
 			Transaction:    transaction,
 		})
 	}
 	return holdings
+}
+
+func getCAGR(isin ISIN, from, to time.Time) float64 {
+	priceHistory := mutualFundsHistory[isin]
+	if len(priceHistory) == 0 {
+		return 0
+	}
+	var cagr float64
+	startIndex := utils.MomentBinarySearch(priceHistory, from)
+	startPrice := priceHistory[startIndex].GetPrice()
+	startTime := priceHistory[startIndex].GetTime()
+	endPrice := priceHistory[len(priceHistory)-1].GetPrice()
+	endTime := to
+	if startIndex != len(priceHistory)-1 {
+		periods := time.Duration(endTime.Sub(startTime)).Hours() / 8766
+		cagr = (math.Pow((endPrice/startPrice), (1/float64(periods))) - 1) * 100
+	}
+	return cagr
+}
+
+func getXIRR(isin ISIN, from, to time.Time, currentValue float64) float64 {
+	tradeHistory := mutualFundsTradebook.MutualFundsTradebook[isin]
+	startIndex := utils.MomentBinarySearch(tradeHistory, from)
+	array := []MutualFundsTrade{}
+	for _, v := range tradeHistory[startIndex:] {
+		if v.TradeType == "sell" {
+			array = append(array, MutualFundsTrade{
+				TradeDate: v.GetTime(),
+				Price:     -v.GetPrice(),
+			})
+			continue
+		}
+		array = append(array, v)
+	}
+	array = append(array, MutualFundsTrade{
+		TradeDate: to,
+		Price:     -currentValue,
+	})
+	xirr := utils.GetXIRR(array)
+	return xirr
+}
+
+func GetMFSummmary(from, to time.Time) []models.MFSummary {
+	var summary []models.MFSummary
+	for isin, trades := range mutualFundsTradebook.MutualFundsTradebook {
+		fmt.Println("starting calculation for ", string(mutualFundsTradebook.GetFundNameFromISIN(isin)))
+		if len(trades) == 0 {
+			continue
+		}
+		var heldUnits float64
+		var moneyInvested float64
+		var moneyHarvested float64
+		var holdingSince *time.Time
+		var currentInvested float64
+		var lastInvestment time.Time
+		for _, t := range trades {
+			if t.TradeType == "buy" {
+				if heldUnits < 1 {
+					k := t.TradeDate
+					holdingSince = &k
+					currentInvested = 0
+				}
+				heldUnits += t.Quantity
+				moneyInvested += t.Quantity * t.Price
+				currentInvested += t.Quantity * t.Price
+				lastInvestment = t.TradeDate
+			} else {
+				heldUnits -= t.Quantity
+				moneyHarvested += t.Quantity * t.Price
+				currentInvested -= t.Quantity * t.Price
+				if heldUnits < 1 {
+					holdingSince = nil
+					currentInvested = 0
+				}
+			}
+		}
+
+		priceHistory := mutualFundsHistory[isin]
+		if len(priceHistory) == 0 {
+			log.Printf("unable to compute summary, price history not found for %s", isin)
+			continue
+		}
+		currentPrice := float64(priceHistory[len(priceHistory)-1].Price)
+
+		var holdingSinceDuration time.Duration
+		if holdingSince != nil {
+			k := time.Since(*holdingSince)
+			h := time.Duration(k.Seconds())
+			holdingSinceDuration = h
+		} else {
+			holdingSinceDuration = 0
+		}
+		currentValue := math.Ceil(heldUnits) * currentPrice
+		var cagr, xirr float64
+		if holdingSince != nil {
+			cagr = getCAGR(isin, *holdingSince, time.Now())
+			xirr = getXIRR(isin, *holdingSince, time.Now(), currentValue)
+		}
+		fmt.Println(string(mutualFundsTradebook.GetFundNameFromISIN(isin)), cagr, xirr)
+		s := models.MFSummary{
+			Name:                  string(mutualFundsTradebook.GetFundNameFromISIN(isin)),
+			ISIN:                  string(isin),
+			HoldingSince:          holdingSinceDuration,
+			HoldingFrom:           time.Duration(lastInvestment.Sub(trades[0].TradeDate).Seconds()),
+			CurrentValue:          currentValue,
+			InvestedValue:         currentInvested,
+			AllTimeAbsoluteReturn: currentValue - currentInvested,
+			LastInvestment:        time.Duration(time.Since(lastInvestment).Seconds()),
+			CAGR:                  cagr,
+			XIRR:                  xirr,
+		}
+		if (currentValue-currentInvested) != 0 && currentInvested != 0 {
+			s.AllTimeAbsoluteReturnPercentage = ((currentValue - currentInvested) / currentInvested) * 100
+		}
+		summary = append(summary, s)
+	}
+	return summary
 }
 
 func GetPriceMFTrendInTimeRange(symbol string, from, to time.Time) []models.MFPriceData {

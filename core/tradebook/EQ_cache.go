@@ -61,7 +61,6 @@ func readEquityTradeFiles(tradebookDir string) (map[ScriptName][]EquityTrade, er
 			continue
 		}
 		if _, ok := tradeSet[record[10]]; ok {
-			fmt.Println("found duplicate trade")
 			continue
 		}
 		tradeSet[record[10]] = struct{}{}
@@ -152,7 +151,7 @@ func BuildPriceHistoryCache() error {
 }
 
 func buildEquityCacheFromFile(symbol ScriptName) ([]models.EquityPriceData, error) {
-	fileName := fmt.Sprintf("./data/trends/equity/%s.json", symbol)
+	fileName := fmt.Sprintf("./data/trends/EQ/%s.json", symbol)
 	fileContent, err := os.ReadFile(fileName)
 	if err != nil {
 		return nil, err

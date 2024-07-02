@@ -4,7 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"sort"
+	"strconv"
 	"strings"
+	"time"
 
 	MC "github.com/Mryashbhardwaj/marketAnalysis/clients/moneyControl"
 	"github.com/Mryashbhardwaj/marketAnalysis/models"
@@ -13,17 +16,24 @@ import (
 
 type MutualFundsTrade struct {
 	Isin               string
-	TradeDate          string
+	TradeDate          time.Time
 	Exchange           string
 	Segment            string
 	Series             string
 	TradeType          string
 	Auction            string
-	Quantity           string
-	Price              string
+	Quantity           float64
+	Price              float64
 	TradeID            string
 	OrderID            string
 	OrderExecutionTime string
+}
+
+func (m MutualFundsTrade) GetTime() time.Time {
+	return m.TradeDate
+}
+func (m MutualFundsTrade) GetPrice() float64 {
+	return m.Price
 }
 
 type FundName string
@@ -67,7 +77,6 @@ func readMFTradeFiles(tradebookDir string) (map[ISIN][]MutualFundsTrade, map[Fun
 			continue
 		}
 		if _, ok := tradeSet[record[10]]; ok {
-			fmt.Println("found duplicate trade")
 			continue
 		}
 		tradeSet[record[10]] = struct{}{}
@@ -78,22 +87,47 @@ func readMFTradeFiles(tradebookDir string) (map[ISIN][]MutualFundsTrade, map[Fun
 		if _, ok := tradebook[isin]; !ok {
 			tradebook[isin] = []MutualFundsTrade{}
 		}
+
+		tradeTime, err := time.Parse(time.DateOnly, record[2])
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+
+		quantityString := record[8]
+		quantity, err := strconv.ParseFloat(quantityString, 64)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+
+		priceString := record[9]
+		price, err := strconv.ParseFloat(priceString, 64)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+
 		tradebook[isin] = append(tradebook[isin], MutualFundsTrade{
 			Isin:               record[1],
-			TradeDate:          record[2],
+			TradeDate:          tradeTime,
 			Exchange:           record[3],
 			Segment:            record[4],
 			Series:             record[5],
 			TradeType:          record[6],
 			Auction:            record[7],
-			Quantity:           record[8],
-			Price:              record[9],
+			Quantity:           quantity,
+			Price:              price,
 			TradeID:            record[10],
 			OrderID:            record[11],
 			OrderExecutionTime: record[12],
 		})
 
 	}
+
+	for isin, _ := range tradebook {
+		sort.Slice(tradebook[isin], func(i, j int) bool {
+			return tradebook[isin][i].TradeDate.Before(tradebook[isin][j].TradeDate)
+		})
+	}
+
 	return tradebook, allFunds, nil
 }
 
@@ -116,7 +150,7 @@ func persistMFInFile(symbol string, trend interface{}) error {
 	if err != nil {
 		return err
 	}
-	fileName := fmt.Sprintf("./data/trends/mutual_funds/%s.json", symbol)
+	fileName := fmt.Sprintf("./data/trends/MF/%s.json", symbol)
 	return os.WriteFile(fileName, fileContent, os.ModePerm)
 }
 
@@ -144,7 +178,7 @@ func BuildMFPriceHistoryCache() error {
 }
 
 func buildFundsCacheFromFile(symbol ISIN) ([]models.MFPriceData, error) {
-	fileName := fmt.Sprintf("./data/trends/mutual_funds/%s.json", symbol)
+	fileName := fmt.Sprintf("./data/trends/MF/%s.json", symbol)
 	fileContent, err := os.ReadFile(fileName)
 	if err != nil {
 		return nil, err

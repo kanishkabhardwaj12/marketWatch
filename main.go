@@ -10,11 +10,11 @@ import (
 )
 
 func buildCache() error {
-	err := tradebook_service.BuildMFTradeBook("./data/trade_books/mutual_funds/")
+	err := tradebook_service.BuildMFTradeBook("./data/trade_books/MF/")
 	if err != nil {
 		return err
 	}
-	err = tradebook_service.BuildEquityTradeBook("./data/trade_books/equity/")
+	err = tradebook_service.BuildEquityTradeBook("./data/trade_books/EQ/")
 	if err != nil {
 		return err
 	}
@@ -37,7 +37,9 @@ func main() {
 	router := routes.SetupRouter()
 
 	// initialise service
-	log.Println("Starting server on :8080")
-	log.Fatal(http.ListenAndServe(":8080", router))
-
+	log.Println("Starting server on :80")
+	err = http.ListenAndServe(":80", router)
+	if err != nil {
+		fmt.Println("Failed to start HTTP server:", err)
+	}
 }

@@ -4,6 +4,7 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"errors"
+	"log"
 	"math"
 	"net/http"
 	"os"
@@ -70,7 +71,10 @@ func GetTimeRange(r *http.Request) (time.Time, time.Time, error) {
 }
 
 func RespondWithJSON(w http.ResponseWriter, status int, payload interface{}) {
-	response, _ := json.Marshal(payload)
+	response, err := json.Marshal(payload)
+	if err != nil {
+		log.Println(err.Error())
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	w.Write(response)
@@ -78,6 +82,84 @@ func RespondWithJSON(w http.ResponseWriter, status int, payload interface{}) {
 
 type TimeGetter interface {
 	GetTime() time.Time
+}
+
+type TradesGetter interface {
+	GetTime() time.Time
+	GetPrice() float64
+}
+
+func GetCAGR[V TradesGetter](trades []V) float64 {
+	if len(trades) == 0 {
+		return 0
+	}
+	beginningValue := trades[0].GetPrice()
+	endingValue := trades[len(trades)-1].GetPrice()
+
+	beginningTime := trades[0].GetTime()
+	endingTime := trades[len(trades)-1].GetTime()
+	periods := time.Duration(endingTime.Sub(beginningTime)).Hours() / 8766
+	if periods <= 0 {
+		return 0
+	}
+	return (math.Pow((endingValue/beginningValue), (1/float64(periods))) - 1) * 100
+}
+
+func GetXIRR[V TradesGetter](trades []V) float64 {
+	if len(trades) == 0 {
+		return 0
+	}
+	// there are moments when all the units are sold, i want to calculate the XIRR since that time
+	// its a design choice
+	return calculateXIRR(trades)
+}
+
+func calculateXIRR[V TradesGetter](cashFlows []V) float64 {
+	guess := 0.5
+	const maxIterations = 1000
+	const tolerance = 1e-6
+
+	// Convert dates to years from the first date
+	daysInYear := 365.25
+	baseDate := cashFlows[0].GetTime()
+	years := make([]float64, len(cashFlows))
+	for i, cf := range cashFlows {
+		years[i] = cf.GetTime().Sub(baseDate).Hours() / 24.0 / daysInYear
+	}
+
+	// Define the XIRR function and its derivative
+	f := func(x float64) float64 {
+		result := 0.0
+		for i, cf := range cashFlows {
+			result += cf.GetPrice() / math.Pow(1.0+x, years[i])
+		}
+		return result
+	}
+
+	fPrime := func(x float64) float64 {
+		result := 0.0
+		for i, cf := range cashFlows {
+			result -= years[i] * cf.GetPrice() / math.Pow(1.0+x, years[i]+1)
+		}
+		return result
+	}
+
+	// Use Newton-Raphson method to find the root
+	rate := guess
+	for i := 0; i < maxIterations; i++ {
+		fValue := f(rate)
+		fDerivative := fPrime(rate)
+		if math.Abs(fDerivative) < tolerance {
+			break
+		}
+		newRate := rate - fValue/fDerivative
+		if math.Abs(newRate-rate) < tolerance {
+			return newRate
+		}
+		rate = newRate
+	}
+	log.Println("unable to converge")
+	return 0
 }
 
 func MomentBinarySearch[V TimeGetter](timestamps []V, target time.Time) int {
