@@ -1,9 +1,11 @@
 package tradebook_service
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"math"
+	"os"
 	"time"
 
 	"github.com/Mryashbhardwaj/marketAnalysis/models"
@@ -223,6 +225,7 @@ func GetPriceMFTrendInTimeRange(symbol string, from, to time.Time) []models.MFPr
 }
 
 func GetGrowthComparison(symbols []string, from, to time.Time) []map[string]interface{} {
+	// This holds, for each timestamp, how much each symbol has changed
 	growthMap := make(map[time.Time]map[string]float32)
 	for _, symbol := range symbols {
 		trend := GetPriceTrendInTimeRange(symbol, from, to)
@@ -279,4 +282,35 @@ func GetMFGrowthComparison(symbols []string, from, to time.Time) []map[string]in
 		index++
 	}
 	return response
+}
+
+func BuildMFTrendCacheIfMissing() error {
+	_ = os.MkdirAll("./data/trends/MF", os.ModePerm)
+
+	for isin, history := range mutualFundsHistory {
+		if len(history) == 0 {
+			continue
+		}
+
+		filePath := fmt.Sprintf("./data/trends/MF/%s.json", isin)
+		if _, err := os.Stat(filePath); err == nil {
+			continue // file exists, skip
+		}
+
+		startPrice := history[0].Price
+		for i := range history {
+			history[i].PercentChange = ((history[i].Price - startPrice) / startPrice) * 100
+		}
+
+		data, err := json.Marshal(history)
+		if err != nil {
+			return fmt.Errorf("marshal failed for %s: %w", isin, err)
+		}
+
+		if err := os.WriteFile(filePath, data, os.ModePerm); err != nil {
+			return fmt.Errorf("write failed for %s: %w", isin, err)
+		}
+	}
+
+	return nil
 }
