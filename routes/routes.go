@@ -15,6 +15,7 @@ func SetupRouter() *mux.Router {
 	router.HandleFunc("/api/equity/trend", handlers.GetTrend).Methods("GET")
 	router.HandleFunc("/api/equity/trend/compare", handlers.GetTrendComparison).Methods("GET")
 	router.HandleFunc("/api/equity/history/refresh", handlers.RefreshPriceHistory).Methods("GET")
+	router.HandleFunc("/api/equity/breakdown", handlers.GetEqBreakdown).Methods("GET")
 
 	router.HandleFunc("/api/mutual_funds/list", handlers.GetMutualFundsList).Methods("GET")
 	router.HandleFunc("/api/mutual_funds/positions", handlers.GetMFPositions).Methods("GET")

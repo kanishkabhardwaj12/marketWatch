@@ -58,7 +58,6 @@ func GetMFPositions(w http.ResponseWriter, r *http.Request) {
 
 func GetTrendComparison(w http.ResponseWriter, r *http.Request) {
 	symbol := r.URL.Query().Get("symbol")
-	//TODO:  add condition here that if symbol is single value then give empty result - DONE
 
 	symbols := strings.Split(symbol[1:len(symbol)-1], ",")
 
@@ -122,4 +121,18 @@ func RefreshMFPriceHistory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	utils.RespondWithJSON(w, 200, "Price History Refreshed Successfully")
+}
+
+func GetEqBreakdown(w http.ResponseWriter, r *http.Request) {
+	symbol := r.URL.Query().Get("symbol")
+	if symbol == "" {
+		utils.RespondWithJSON(w, 400, "Missing 'symbol' parameter")
+		return
+	}
+	breakdown, err := tradebook_service.GetEqBreakdown(symbol)
+	if err != nil {
+		utils.RespondWithJSON(w, 500, err.Error())
+		return
+	}
+	utils.RespondWithJSON(w, 200, breakdown)
 }
