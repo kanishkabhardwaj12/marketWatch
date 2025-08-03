@@ -1,0 +1,123 @@
+package server
+
+import (
+	"errors"
+	"fmt"
+	"log/slog"
+	"net/http"
+	"os"
+
+	"github.com/Mryashbhardwaj/marketAnalysis/internal/api/routes"
+	"github.com/Mryashbhardwaj/marketAnalysis/internal/config"
+	tradebook_service "github.com/Mryashbhardwaj/marketAnalysis/internal/domain/service"
+	"github.com/spf13/cobra"
+)
+
+type serveCommand struct {
+	port           int
+	configFilePath string
+
+	logger *slog.Logger
+	config *config.Config
+}
+
+// NewServeCommand initializes command to serve the API
+func NewServeCommand() *cobra.Command {
+	s := &serveCommand{}
+
+	cmd := &cobra.Command{
+		Use:     "serve",
+		Short:   "Start the API server",
+		Example: "marketWatch serve -p portnumber -c /path/to/config.yaml",
+		RunE:    s.RunE,
+		PreRunE: s.PreRunE,
+	}
+
+	// Config filepath flag
+	cmd.Flags().StringVarP(&s.configFilePath, "config", "c", "", "File path for client configuration")
+
+	cmd.Flags().IntVarP(&s.port, "port", "p", 8080, "service endpoint url")
+
+	return cmd
+}
+
+func (s *serveCommand) PreRunE(cmd *cobra.Command, _ []string) error {
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+
+	s.logger = logger
+
+	if s.configFilePath == "" {
+		return errors.New("config file path is required")
+	}
+
+	cfg, err := config.LoadConfig(s.configFilePath)
+	if err != nil {
+		logger.Error("failed to open config file", slog.String("error", err.Error()))
+		return err
+	}
+
+	s.config = cfg
+
+	return err
+}
+
+func (s *serveCommand) RunE(_ *cobra.Command, _ []string) error {
+
+	err := buildCache(s.config)
+	if err != nil {
+		fmt.Errorf("failed building cache", slog.String("error", err.Error()))
+		return err
+	}
+
+	router := routes.SetupRouter()
+	//  todo: take handlers as new handler and inject logger in handlers.SetupRouter
+
+	// initialise server
+	host := ""
+	addr := fmt.Sprintf("%s:%d", host, s.port)
+	s.logger.Info("Starting server ", slog.String("addr", addr))
+	err = http.ListenAndServe(addr, router)
+	if err != nil {
+		s.logger.Error("Failed to start HTTP server", slog.String("error", err.Error()))
+		return fmt.Errorf("failed to start HTTP server: %w", err)
+	}
+
+	return nil
+}
+
+// initialise immemory database
+func buildCache(cfg *config.Config) error {
+	mfDir := cfg.MutualFunds.TradeFilesDirectory
+	eqDir := cfg.Equity.TradeFilesDirectory
+
+	// if neither is configured
+	if mfDir == "" && eqDir == "" {
+		return fmt.Errorf("no tradefiles directory set for equity or mutual funds")
+	}
+
+	if mfDir != "" {
+		if err := tradebook_service.BuildMFTradeBook(mfDir); err != nil {
+			return fmt.Errorf("MF TradeBook: %w", err)
+		}
+		if err := tradebook_service.BuildMFTrendCacheIfMissing(); err != nil {
+			return fmt.Errorf("MF Trend cache: %w", err)
+		}
+		if err := tradebook_service.BuildMFPriceHistoryCacheFromFile(); err != nil {
+			return fmt.Errorf("MF Price cache: %w", err)
+		}
+
+	}
+
+	if eqDir != "" {
+		if err := tradebook_service.BuildEquityTradeBook(eqDir); err != nil {
+			return fmt.Errorf("EQ TradeBook: %w", err)
+		}
+		if err := tradebook_service.BuildEquityPriceHistoryCacheFromFile(); err != nil {
+			return fmt.Errorf("EQ Price cache: %w", err)
+		}
+	}
+
+	return nil
+}

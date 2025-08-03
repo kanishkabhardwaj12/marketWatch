@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/Mryashbhardwaj/marketAnalysis/clients/tickerTape"
+	"github.com/Mryashbhardwaj/marketAnalysis/internal/clients/tickerTape"
 )
 
 func TestGetMFSummary(t *testing.T) {
