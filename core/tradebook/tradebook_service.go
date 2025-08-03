@@ -56,7 +56,7 @@ func GetMFPriceTrendInTimeRange(symbol string, from, to time.Time) []models.Equi
 		return nil
 	}
 	startPrice := requestedRange[0].Close
-	for i, _ := range requestedRange {
+	for i := range requestedRange {
 		requestedRange[i].PercentChange = ((requestedRange[i].Close - startPrice) / startPrice) * 100
 	}
 	return requestedRange
@@ -74,7 +74,7 @@ func GetPriceTrendInTimeRange(symbol string, from, to time.Time) []models.Equity
 		return nil
 	}
 	startPrice := requestedRange[0].Close
-	for i, _ := range requestedRange {
+	for i := range requestedRange {
 		requestedRange[i].PercentChange = ((requestedRange[i].Close - startPrice) / startPrice) * 100
 	}
 	return requestedRange
@@ -238,7 +238,7 @@ func GetPriceMFTrendInTimeRange(symbol string, from, to time.Time) []models.MFPr
 		return nil
 	}
 	startPrice := requestedRange[0].Price
-	for i, _ := range requestedRange {
+	for i := range requestedRange {
 		requestedRange[i].PercentChange = ((requestedRange[i].Price - startPrice) / startPrice) * 100
 	}
 	return requestedRange

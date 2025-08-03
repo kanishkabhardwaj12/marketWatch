@@ -10,6 +10,7 @@ import (
 	MC "github.com/Mryashbhardwaj/marketAnalysis/clients/moneyControl"
 	"github.com/Mryashbhardwaj/marketAnalysis/models"
 	"github.com/Mryashbhardwaj/marketAnalysis/utils"
+	"github.com/pkg/errors"
 )
 
 type EquityTrade struct {
@@ -89,7 +90,7 @@ func BuildEquityTradeBook(tradebookDir string) error {
 		return err
 	}
 	var trickers []ScriptName
-	for fundName, _ := range tradeMap {
+	for fundName := range tradeMap {
 		trickers = append(trickers, fundName)
 	}
 	equityTradebook.EquityTradebook = tradeMap
@@ -147,7 +148,7 @@ func BuildPriceHistoryCache() error {
 	if len(errorList) == 0 {
 		return nil
 	}
-	return fmt.Errorf(strings.Join(errorList, "\n"))
+	return errors.New(strings.Join(errorList, "\n"))
 }
 
 func buildEquityCacheFromFile(symbol ScriptName) ([]models.EquityPriceData, error) {

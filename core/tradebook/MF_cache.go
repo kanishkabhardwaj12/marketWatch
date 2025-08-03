@@ -73,7 +73,7 @@ func readMFTradeFiles(tradebookDir string) (map[ISIN][]MutualFundsTrade, map[Fun
 	if err != nil {
 		return nil, nil, err
 	}
-	tradebook := make(map[ISIN][]MutualFundsTrade) 
+	tradebook := make(map[ISIN][]MutualFundsTrade)
 	// avoid magic numbers, instead of 10 it should be index of trade_id
 	for _, record := range tradebookCSV {
 		if record[0] == "symbol" { //suh handling shoul dnot be needed, instead handle using skip header
@@ -125,7 +125,7 @@ func readMFTradeFiles(tradebookDir string) (map[ISIN][]MutualFundsTrade, map[Fun
 
 	}
 
-	for isin, _ := range tradebook {
+	for isin := range tradebook {
 		sort.Slice(tradebook[isin], func(i, j int) bool {
 			return tradebook[isin][i].TradeDate.Before(tradebook[isin][j].TradeDate)
 		})
@@ -178,7 +178,7 @@ func BuildMFPriceHistoryCache() error {
 	if len(errorList) == 0 {
 		return nil
 	}
-	return fmt.Errorf(strings.Join(errorList, "\n"))
+	return errors.New(strings.Join(errorList, "\n"))
 }
 
 func buildFundsCacheFromFile(symbol ISIN) ([]models.MFPriceData, error) {
