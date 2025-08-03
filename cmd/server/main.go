@@ -57,7 +57,7 @@ func buildCache(cfg *config.Config) error {
 }
 
 func main() {
-
+	PrintCLIGreeting()
 	port := flag.Int64("p", 8080, "Port to run the server on")
 	configFilePath := flag.String("c", "./config.yaml", "Location of the config file")
 
