@@ -1,4 +1,4 @@
-package tradebook_service
+package service
 
 import (
 	"encoding/json"
@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	MC "github.com/Mryashbhardwaj/marketAnalysis/clients/moneyControl"
-	"github.com/Mryashbhardwaj/marketAnalysis/models"
-	"github.com/Mryashbhardwaj/marketAnalysis/utils"
+	MC "github.com/Mryashbhardwaj/marketAnalysis/internal/clients/moneyControl"
+	"github.com/Mryashbhardwaj/marketAnalysis/internal/domain/models"
+	"github.com/Mryashbhardwaj/marketAnalysis/internal/utils"
 	"github.com/pkg/errors"
 )
 
@@ -40,7 +40,7 @@ type EquityTradebook struct {
 	EquityTradebook map[ScriptName][]EquityTrade
 }
 
-var equityTradebook EquityTradebook
+var EquityTradebookCache EquityTradebook
 
 var shareHistory = make(map[ScriptName][]models.EquityPriceData)
 
@@ -93,8 +93,8 @@ func BuildEquityTradeBook(tradebookDir string) error {
 	for fundName := range tradeMap {
 		trickers = append(trickers, fundName)
 	}
-	equityTradebook.EquityTradebook = tradeMap
-	equityTradebook.AllScripts = trickers
+	EquityTradebookCache.EquityTradebook = tradeMap
+	EquityTradebookCache.AllScripts = trickers
 	return nil
 }
 
@@ -130,7 +130,7 @@ func fetchTradeHistories(script ScriptName) ([]models.EquityPriceData, error) {
 
 func BuildPriceHistoryCache() error {
 	var errorList []string
-	for _, symbol := range equityTradebook.AllScripts {
+	for _, symbol := range EquityTradebookCache.AllScripts {
 		history, err := fetchTradeHistories(symbol)
 		if err != nil {
 			fmt.Printf("error fetching history for %s, err:%s", symbol, err.Error())
@@ -163,7 +163,7 @@ func buildEquityCacheFromFile(symbol ScriptName) ([]models.EquityPriceData, erro
 }
 
 func BuildEquityPriceHistoryCacheFromFile() error {
-	for _, symbol := range equityTradebook.AllScripts {
+	for _, symbol := range EquityTradebookCache.AllScripts {
 		history, err := buildEquityCacheFromFile(symbol)
 		if err != nil {
 			fmt.Printf("error fetching history from file for %s, err:%s\n", symbol, err.Error())

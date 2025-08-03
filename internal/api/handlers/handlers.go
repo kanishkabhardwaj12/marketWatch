@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	tradebook_service "github.com/Mryashbhardwaj/marketAnalysis/core/tradebook"
-	"github.com/Mryashbhardwaj/marketAnalysis/utils"
+	tradebook_service "github.com/Mryashbhardwaj/marketAnalysis/internal/domain/service"
+	"github.com/Mryashbhardwaj/marketAnalysis/internal/utils"
 )
 
 type mutualFundOverview struct {

@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Mryashbhardwaj/marketAnalysis/models"
+	"github.com/Mryashbhardwaj/marketAnalysis/internal/domain/models"
 )
 
 func GetMFHistoryFromMoneyControll(isin string) ([]models.MFPriceData, error) {

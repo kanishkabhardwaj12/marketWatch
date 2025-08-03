@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"github.com/Mryashbhardwaj/marketAnalysis/handlers"
+	"github.com/Mryashbhardwaj/marketAnalysis/internal/api/handlers"
 	"github.com/gorilla/mux"
 )
 

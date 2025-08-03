@@ -1,4 +1,4 @@
-package tradebook_service
+package service
 
 import (
 	"encoding/json"
@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Mryashbhardwaj/marketAnalysis/models"
-	"github.com/Mryashbhardwaj/marketAnalysis/utils"
+	"github.com/Mryashbhardwaj/marketAnalysis/internal/domain/models"
+	"github.com/Mryashbhardwaj/marketAnalysis/internal/utils"
 )
 
 type TradeRecord struct {
@@ -34,14 +34,14 @@ type BreakdownResponse struct {
 
 func GetMutualFundsList() []string {
 	var fundList []string
-	for fundName, insi := range mutualFundsTradebook.AllFunds {
+	for fundName, insi := range MutualFundsTradebookCache.AllFunds {
 		fundList = append(fundList, fmt.Sprintf("%s:%s", fundName, insi))
 	}
 	return fundList
 }
 
 func GetEquityList() []ScriptName {
-	return equityTradebook.AllScripts
+	return EquityTradebookCache.AllScripts
 }
 
 func GetMFPriceTrendInTimeRange(symbol string, from, to time.Time) []models.EquityPriceData {
@@ -81,7 +81,7 @@ func GetPriceTrendInTimeRange(symbol string, from, to time.Time) []models.Equity
 }
 
 func GetPriceMFPositionsInTimeRange(symbol string, from, to time.Time) []models.MFHoldingsData {
-	requestedRange := mutualFundsTradebook.MutualFundsTradebook[ISIN(symbol)]
+	requestedRange := MutualFundsTradebookCache.MutualFundsTradebook[ISIN(symbol)]
 	if len(requestedRange) == 0 {
 		return nil
 	}
@@ -128,7 +128,7 @@ func getCAGR(isin ISIN, from, to time.Time) float64 {
 }
 
 func getXIRR(isin ISIN, from, to time.Time, currentValue float64) float64 {
-	tradeHistory := mutualFundsTradebook.MutualFundsTradebook[isin]
+	tradeHistory := MutualFundsTradebookCache.MutualFundsTradebook[isin]
 	startIndex := utils.MomentBinarySearch(tradeHistory, from)
 	array := []MutualFundsTrade{}
 	for _, v := range tradeHistory[startIndex:] {
@@ -151,8 +151,8 @@ func getXIRR(isin ISIN, from, to time.Time, currentValue float64) float64 {
 
 func GetMFSummmary(from, to time.Time) []models.MFSummary {
 	var summary []models.MFSummary
-	for isin, trades := range mutualFundsTradebook.MutualFundsTradebook {
-		fmt.Println("starting calculation for ", string(mutualFundsTradebook.GetFundNameFromISIN(isin)))
+	for isin, trades := range MutualFundsTradebookCache.MutualFundsTradebook {
+		fmt.Println("starting calculation for ", string(MutualFundsTradebookCache.GetFundNameFromISIN(isin)))
 		if len(trades) == 0 {
 			continue
 		}
@@ -205,9 +205,9 @@ func GetMFSummmary(from, to time.Time) []models.MFSummary {
 			cagr = getCAGR(isin, *holdingSince, time.Now())
 			xirr = getXIRR(isin, *holdingSince, time.Now(), currentValue)
 		}
-		fmt.Println(string(mutualFundsTradebook.GetFundNameFromISIN(isin)), cagr, xirr)
+		fmt.Println(string(MutualFundsTradebookCache.GetFundNameFromISIN(isin)), cagr, xirr)
 		s := models.MFSummary{
-			Name:                  string(mutualFundsTradebook.GetFundNameFromISIN(isin)),
+			Name:                  string(MutualFundsTradebookCache.GetFundNameFromISIN(isin)),
 			ISIN:                  string(isin),
 			HoldingSince:          holdingSinceDuration,
 			HoldingFrom:           time.Duration(lastInvestment.Sub(trades[0].TradeDate).Seconds()),
@@ -295,7 +295,7 @@ func GetMFGrowthComparison(symbols []string, from, to time.Time) []map[string]in
 	for timeStamp, mapSymbolToPrice := range growthMap {
 		response[index] = make(map[string]interface{})
 		for s, p := range mapSymbolToPrice {
-			fundName := mutualFundsTradebook.GetFundNameFromISIN(ISIN(s)).String()
+			fundName := MutualFundsTradebookCache.GetFundNameFromISIN(ISIN(s)).String()
 			response[index][fundName] = p
 		}
 		response[index]["time"] = timeStamp
@@ -337,7 +337,7 @@ func BuildMFTrendCacheIfMissing() error {
 
 func GetEqBreakdown(symbol string) (BreakdownResponse, error) {
 	script := ScriptName(strings.ToUpper(symbol))
-	trades, ok := equityTradebook.EquityTradebook[script]
+	trades, ok := EquityTradebookCache.EquityTradebook[script]
 	if !ok {
 		return BreakdownResponse{}, fmt.Errorf("no data for symbol: %s", symbol)
 	}

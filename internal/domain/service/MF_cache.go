@@ -1,4 +1,4 @@
-package tradebook_service
+package service
 
 import (
 	"encoding/json"
@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	MC "github.com/Mryashbhardwaj/marketAnalysis/clients/moneyControl"
-	"github.com/Mryashbhardwaj/marketAnalysis/models"
-	"github.com/Mryashbhardwaj/marketAnalysis/utils"
+	MC "github.com/Mryashbhardwaj/marketAnalysis/internal/clients/moneyControl"
+	"github.com/Mryashbhardwaj/marketAnalysis/internal/domain/models"
+	"github.com/Mryashbhardwaj/marketAnalysis/internal/utils"
 	"github.com/pkg/errors"
 )
 
@@ -51,7 +51,7 @@ type MutualFundsTradebook struct {
 	MutualFundsTradebook map[ISIN][]MutualFundsTrade
 }
 
-var mutualFundsTradebook MutualFundsTradebook
+var MutualFundsTradebookCache MutualFundsTradebook
 
 func (m MutualFundsTradebook) GetFundNameFromISIN(k ISIN) FundName {
 	return m.ISINToFundName[k]
@@ -139,11 +139,11 @@ func BuildMFTradeBook(tradebookDir string) error {
 	if err != nil {
 		return errors.Wrap(err, "unable to read MF trade file")
 	}
-	mutualFundsTradebook.MutualFundsTradebook = tradeMap
-	mutualFundsTradebook.AllFunds = allFunds
-	mutualFundsTradebook.ISINToFundName = make(map[ISIN]FundName)
+	MutualFundsTradebookCache.MutualFundsTradebook = tradeMap
+	MutualFundsTradebookCache.AllFunds = allFunds
+	MutualFundsTradebookCache.ISINToFundName = make(map[ISIN]FundName)
 	for k, v := range allFunds {
-		mutualFundsTradebook.ISINToFundName[v] = k
+		MutualFundsTradebookCache.ISINToFundName[v] = k
 	}
 	return nil
 }
@@ -160,7 +160,7 @@ func persistMFInFile(symbol string, trend interface{}) error {
 // persist call comes from here for mf
 func BuildMFPriceHistoryCache() error {
 	var errorList []string
-	for name, isin := range mutualFundsTradebook.AllFunds {
+	for name, isin := range MutualFundsTradebookCache.AllFunds {
 		history, err := MC.GetMFHistoryFromMoneyControll(string(isin))
 		if err != nil {
 			fmt.Printf("error fetching history for MF %s, err:%s", name, err.Error())
@@ -193,7 +193,7 @@ func buildFundsCacheFromFile(symbol ISIN) ([]models.MFPriceData, error) {
 }
 
 func BuildMFPriceHistoryCacheFromFile() error {
-	for _, isin := range mutualFundsTradebook.AllFunds {
+	for _, isin := range MutualFundsTradebookCache.AllFunds {
 		history, err := buildFundsCacheFromFile(isin)
 		if err != nil {
 			fmt.Printf("error reading MF cache for %s: %s\n", isin, err)

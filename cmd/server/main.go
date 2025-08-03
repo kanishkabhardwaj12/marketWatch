@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/Mryashbhardwaj/marketAnalysis/config"
-	tradebook_service "github.com/Mryashbhardwaj/marketAnalysis/core/tradebook"
-	"github.com/Mryashbhardwaj/marketAnalysis/routes"
+	"github.com/Mryashbhardwaj/marketAnalysis/internal/api/routes"
+	"github.com/Mryashbhardwaj/marketAnalysis/internal/config"
+	tradebook_service "github.com/Mryashbhardwaj/marketAnalysis/internal/domain/service"
 )
 
 func PrintCLIGreeting() {
