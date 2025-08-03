@@ -161,7 +161,7 @@ func buildEquityCacheFromFile(symbol ScriptName) ([]models.EquityPriceData, erro
 	return trend, err
 }
 
-func BuildPriceHistoryCacheFromFile() error {
+func BuildEquityPriceHistoryCacheFromFile() error {
 	for _, symbol := range equityTradebook.AllScripts {
 		history, err := buildEquityCacheFromFile(symbol)
 		if err != nil {
@@ -169,15 +169,6 @@ func BuildPriceHistoryCacheFromFile() error {
 			continue
 		}
 		shareHistory[symbol] = history
-	}
-
-	for _, symbol := range mutualFundsTradebook.AllFunds {
-		history, err := buildFundsCacheFromFile(symbol)
-		if err != nil {
-			fmt.Printf("error fetching history from file for %s, err:%s\n", symbol, err.Error())
-			continue
-		}
-		mutualFundsHistory[symbol] = history
 	}
 	return nil
 }

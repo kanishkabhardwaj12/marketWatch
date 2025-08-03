@@ -12,6 +12,7 @@ import (
 	MC "github.com/Mryashbhardwaj/marketAnalysis/clients/moneyControl"
 	"github.com/Mryashbhardwaj/marketAnalysis/models"
 	"github.com/Mryashbhardwaj/marketAnalysis/utils"
+	"github.com/pkg/errors"
 )
 
 type MutualFundsTrade struct {
@@ -58,6 +59,7 @@ func (m MutualFundsTradebook) GetFundNameFromISIN(k ISIN) FundName {
 
 var mutualFundsHistory = make(map[ISIN][]models.MFPriceData)
 
+// explain the purpose of this function
 func readMFTradeFiles(tradebookDir string) (map[ISIN][]MutualFundsTrade, map[FundName]ISIN, error) {
 	// to remove duplidate trade ids
 	tradeSet := make(map[string]struct{})
@@ -71,9 +73,10 @@ func readMFTradeFiles(tradebookDir string) (map[ISIN][]MutualFundsTrade, map[Fun
 	if err != nil {
 		return nil, nil, err
 	}
-	tradebook := make(map[ISIN][]MutualFundsTrade)
+	tradebook := make(map[ISIN][]MutualFundsTrade) 
+	// avoid magic numbers, instead of 10 it should be index of trade_id
 	for _, record := range tradebookCSV {
-		if record[0] == "symbol" {
+		if record[0] == "symbol" { //suh handling shoul dnot be needed, instead handle using skip header
 			continue
 		}
 		if _, ok := tradeSet[record[10]]; ok {
@@ -134,7 +137,7 @@ func readMFTradeFiles(tradebookDir string) (map[ISIN][]MutualFundsTrade, map[Fun
 func BuildMFTradeBook(tradebookDir string) error {
 	tradeMap, allFunds, err := readMFTradeFiles(tradebookDir)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "unable to read MF trade file")
 	}
 	mutualFundsTradebook.MutualFundsTradebook = tradeMap
 	mutualFundsTradebook.AllFunds = allFunds
@@ -148,12 +151,13 @@ func BuildMFTradeBook(tradebookDir string) error {
 func persistMFInFile(symbol string, trend interface{}) error {
 	fileContent, err := json.Marshal(trend)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "unable to persist MF trade file")
 	}
 	fileName := fmt.Sprintf("./data/trends/MF/%s.json", symbol)
 	return os.WriteFile(fileName, fileContent, os.ModePerm)
 }
 
+// persist call comes from here for mf
 func BuildMFPriceHistoryCache() error {
 	var errorList []string
 	for name, isin := range mutualFundsTradebook.AllFunds {
@@ -186,4 +190,16 @@ func buildFundsCacheFromFile(symbol ISIN) ([]models.MFPriceData, error) {
 	trend := []models.MFPriceData{}
 	err = json.Unmarshal(fileContent, &trend)
 	return trend, err
+}
+
+func BuildMFPriceHistoryCacheFromFile() error {
+	for _, isin := range mutualFundsTradebook.AllFunds {
+		history, err := buildFundsCacheFromFile(isin)
+		if err != nil {
+			fmt.Printf("error reading MF cache for %s: %s\n", isin, err)
+			continue
+		}
+		mutualFundsHistory[isin] = history
+	}
+	return nil
 }

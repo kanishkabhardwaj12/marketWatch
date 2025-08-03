@@ -3,7 +3,8 @@ package utils
 import (
 	"encoding/csv"
 	"encoding/json"
-	"errors"
+	"path"
+
 	"log"
 	"math"
 	"net/http"
@@ -11,20 +12,23 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 func ReadDir(dir string) ([]string, error) {
 	tradeFiles, err := os.ReadDir(dir)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "doesNotExist")
 	}
 	var tradeFilesStrings []string
 	for _, tf := range tradeFiles {
-		tradeFilesStrings = append(tradeFilesStrings, dir+tf.Name())
+		tradeFilesStrings = append(tradeFilesStrings, path.Join(dir, tf.Name()))
 	}
 	return tradeFilesStrings, nil
 }
-
+// skip header - flag - int - skip how many lines
+//change name to readandmergecsvfiles
 func ReadCSV(tradeFiles []string) ([][]string, error) {
 	var tradeFilesCombined [][]string
 	for _, tf := range tradeFiles {
