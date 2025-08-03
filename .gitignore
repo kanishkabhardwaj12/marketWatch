@@ -21,8 +21,12 @@
 go.work
 go.work.sum
 
-
+# config and data files 
+config.yaml
 data/trade_books/EQ/*.csv
 data/trade_books/MF/*.csv
 data/trends/EQ/*.json
 data/trends/MF/*.json
+
+# Debug relatedfiles
+__debug_*

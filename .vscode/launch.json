@@ -1,6 +1,5 @@
 {
     "configurations": [
-        
     {
         "name": "Launch Package",
         "type": "go",
