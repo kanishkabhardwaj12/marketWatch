@@ -103,6 +103,11 @@ func persistInFile(symbol string, trend interface{}) error {
 	if err != nil {
 		return err
 	}
+	if _, err := os.Stat("./data/trends/EQ/"); os.IsNotExist(err) {
+		if err := os.MkdirAll("./data/trends/EQ/", os.ModePerm); err != nil {
+			return errors.Wrap(err, "unable to create EQ trends directory")
+		}
+	}
 	fileName := fmt.Sprintf("./data/trends/EQ/%s.json", symbol)
 	return os.WriteFile(fileName, fileContent, os.ModePerm)
 }

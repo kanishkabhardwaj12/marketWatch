@@ -1,14 +1,14 @@
 run:
 	go run main.go
 
-build: 
+build:
 	go build -o marketWatch main.go
 
 lint:
 	golangci-lint run --fix
 
 serve:
-	marketWatch serve
+	./marketWatch serve -p 8080 -c ./config.yaml
 
-fetch-trends: 
-	marketWatch fetch-trends
+refresh-trends:
+	./marketWatch refresh-trends -c ./config.yaml

@@ -9,7 +9,7 @@ import (
 
 	"github.com/Mryashbhardwaj/marketAnalysis/internal/api/routes"
 	"github.com/Mryashbhardwaj/marketAnalysis/internal/config"
-	tradebook_service "github.com/Mryashbhardwaj/marketAnalysis/internal/domain/service"
+	"github.com/Mryashbhardwaj/marketAnalysis/internal/domain/service"
 	"github.com/spf13/cobra"
 )
 
@@ -65,9 +65,9 @@ func (s *serveCommand) PreRunE(cmd *cobra.Command, _ []string) error {
 
 func (s *serveCommand) RunE(_ *cobra.Command, _ []string) error {
 
-	err := buildCache(s.config)
+	err := service.BuildCache(s.config)
 	if err != nil {
-		fmt.Errorf("failed building cache", slog.String("error", err.Error()))
+		s.logger.Error("failed building cache", slog.String("error", err.Error()))
 		return err
 	}
 
@@ -82,41 +82,6 @@ func (s *serveCommand) RunE(_ *cobra.Command, _ []string) error {
 	if err != nil {
 		s.logger.Error("Failed to start HTTP server", slog.String("error", err.Error()))
 		return fmt.Errorf("failed to start HTTP server: %w", err)
-	}
-
-	return nil
-}
-
-// initialise immemory database
-func buildCache(cfg *config.Config) error {
-	mfDir := cfg.MutualFunds.TradeFilesDirectory
-	eqDir := cfg.Equity.TradeFilesDirectory
-
-	// if neither is configured
-	if mfDir == "" && eqDir == "" {
-		return fmt.Errorf("no tradefiles directory set for equity or mutual funds")
-	}
-
-	if mfDir != "" {
-		if err := tradebook_service.BuildMFTradeBook(mfDir); err != nil {
-			return fmt.Errorf("MF TradeBook: %w", err)
-		}
-		if err := tradebook_service.BuildMFTrendCacheIfMissing(); err != nil {
-			return fmt.Errorf("MF Trend cache: %w", err)
-		}
-		if err := tradebook_service.BuildMFPriceHistoryCacheFromFile(); err != nil {
-			return fmt.Errorf("MF Price cache: %w", err)
-		}
-
-	}
-
-	if eqDir != "" {
-		if err := tradebook_service.BuildEquityTradeBook(eqDir); err != nil {
-			return fmt.Errorf("EQ TradeBook: %w", err)
-		}
-		if err := tradebook_service.BuildEquityPriceHistoryCacheFromFile(); err != nil {
-			return fmt.Errorf("EQ Price cache: %w", err)
-		}
 	}
 
 	return nil

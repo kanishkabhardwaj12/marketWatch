@@ -153,6 +153,11 @@ func persistMFInFile(symbol string, trend interface{}) error {
 	if err != nil {
 		return errors.Wrap(err, "unable to persist MF trade file")
 	}
+	if _, err := os.Stat("./data/trends/MF/"); os.IsNotExist(err) {
+		if err := os.MkdirAll("./data/trends/MF/", os.ModePerm); err != nil {
+			return errors.Wrap(err, "unable to create MF trends directory")
+		}
+	}
 	fileName := fmt.Sprintf("./data/trends/MF/%s.json", symbol)
 	return os.WriteFile(fileName, fileContent, os.ModePerm)
 }
