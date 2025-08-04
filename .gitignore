@@ -13,6 +13,7 @@
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
+marketWatch
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
@@ -21,8 +22,12 @@
 go.work
 go.work.sum
 
-
+# config and data files 
+config.yaml
 data/trade_books/EQ/*.csv
 data/trade_books/MF/*.csv
 data/trends/EQ/*.json
 data/trends/MF/*.json
+
+# Debug relatedfiles
+__debug_*

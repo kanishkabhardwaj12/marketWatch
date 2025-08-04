@@ -1,4 +1,0 @@
-mutual_funds:
-  tradefiles_diretory: "./data/trade_books/MF"
-equity:
-  tradefiles_diretory: "./data/trade_books/EQ"
