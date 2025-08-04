@@ -27,8 +27,9 @@ func ReadDir(dir string) ([]string, error) {
 	}
 	return tradeFilesStrings, nil
 }
+
 // skip header - flag - int - skip how many lines
-//change name to readandmergecsvfiles
+// change name to readandmergecsvfiles
 func ReadCSV(tradeFiles []string) ([][]string, error) {
 	var tradeFilesCombined [][]string
 	for _, tf := range tradeFiles {
@@ -74,6 +75,7 @@ func GetTimeRange(r *http.Request) (time.Time, time.Time, error) {
 	return from, to, nil
 }
 
+// todo: accept logger as an argument and log using structured logging
 func RespondWithJSON(w http.ResponseWriter, status int, payload interface{}) {
 	response, err := json.Marshal(payload)
 	if err != nil {
@@ -81,7 +83,9 @@ func RespondWithJSON(w http.ResponseWriter, status int, payload interface{}) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	w.Write(response)
+	if _, err := w.Write(response); err != nil {
+		log.Println("error writing response:", err)
+	}
 }
 
 type TimeGetter interface {

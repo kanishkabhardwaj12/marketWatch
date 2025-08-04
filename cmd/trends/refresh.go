@@ -7,7 +7,6 @@ import (
 
 	"github.com/Mryashbhardwaj/marketAnalysis/internal/config"
 	"github.com/Mryashbhardwaj/marketAnalysis/internal/domain/service"
-	tradebook_service "github.com/Mryashbhardwaj/marketAnalysis/internal/domain/service"
 	"github.com/spf13/cobra"
 )
 
@@ -65,8 +64,16 @@ func (s *fetchCommand) RunE(_ *cobra.Command, _ []string) error {
 		s.logger.Error("failed building cache", slog.String("error", err.Error()))
 		return err
 	}
-	tradebook_service.BuildPriceHistoryCache()
-	tradebook_service.BuildMFPriceHistoryCache()
+	err = service.BuildPriceHistoryCache()
+	if err != nil {
+		s.logger.Error("failed building price history cache for Equity", slog.String("error", err.Error()))
+		return err
+	}
+	err = service.BuildMFPriceHistoryCache()
+	if err != nil {
+		s.logger.Error("failed building price history cache for Mutual Funds", slog.String("error", err.Error()))
+		return err
+	}
 
 	return nil
 }

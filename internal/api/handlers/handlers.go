@@ -9,13 +9,13 @@ import (
 	"github.com/Mryashbhardwaj/marketAnalysis/internal/utils"
 )
 
-type mutualFundOverview struct {
+type mutualFundOverview struct { //nolint:unused
 	Symbol        string
 	Name          string
 	CurrentTotal  float64
 	HoldingsStart time.Time
 	HoldingsEnd   time.Time
-}
+} // TODO: remove this struct, not used
 
 func GetTrend(w http.ResponseWriter, r *http.Request) {
 	symbol := r.URL.Query().Get("symbol")

@@ -11,8 +11,6 @@ const (
 	summaryUrl = "https://api.tickertape.in/mutualfunds/%s/summary"
 )
 
-var ttSymbolISINMap = make(map[TtSymbol]string)
-
 type TtSymbol string
 
 func (t TtSymbol) String() string {
@@ -37,7 +35,12 @@ func (t TtSymbol) GetMFSummary() (*MFSummary, error) {
 		return nil, err
 	}
 
-	defer resp.Body.Close()
+	defer func() {
+		if cerr := resp.Body.Close(); cerr != nil {
+			fmt.Printf("error closing response body: %v\n", cerr)
+		}
+	}()
+
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err

@@ -30,7 +30,11 @@ func GetMFHistoryFromMoneyControll(isin string) ([]models.MFPriceData, error) {
 		return nil, err
 	}
 
-	defer resp.Body.Close()
+	defer func() {
+		if cerr := resp.Body.Close(); cerr != nil {
+			fmt.Printf("error closing response body: %v\n", cerr)
+		}
+	}()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
@@ -71,7 +75,11 @@ func GetEQHistoryFromMoneyControll(tickerSymbol string) (*models.MoneyControlRes
 		return nil, err
 	}
 
-	defer resp.Body.Close()
+	defer func() {
+		if cerr := resp.Body.Close(); cerr != nil {
+			fmt.Printf("error closing response body: %v\n", cerr)
+		}
+	}()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
