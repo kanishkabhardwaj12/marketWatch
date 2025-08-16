@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -106,20 +107,30 @@ func GetEquityList(w http.ResponseWriter, r *http.Request) {
 }
 
 func RefreshPriceHistory(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
 	err := tradebook_service.BuildPriceHistoryCache()
+	elapsed := time.Since(start)
+	fmt.Printf("equity cache built in: %v\n", elapsed)
 	if err != nil {
 		utils.RespondWithJSON(w, 505, err.Error())
 		return
 	}
+
 	utils.RespondWithJSON(w, 200, "Price History Refreshed Successfully")
 }
 
 func RefreshMFPriceHistory(w http.ResponseWriter, r *http.Request) {
-	err := tradebook_service.BuildMFPriceHistoryCache()
-	if err != nil {
-		utils.RespondWithJSON(w, 505, err.Error())
-		return
+	for i := 0; i < 6; i++ {
+		start := time.Now()
+		err := tradebook_service.BuildMFPriceHistoryCache()
+		elapsed := time.Since(start)
+		fmt.Printf("mf cache built in: %v\n", elapsed)
+		if err != nil {
+			utils.RespondWithJSON(w, 505, err.Error())
+			return
+		}
 	}
+
 	utils.RespondWithJSON(w, 200, "Price History Refreshed Successfully")
 }
 

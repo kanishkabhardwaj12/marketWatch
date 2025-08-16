@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	MC "github.com/Mryashbhardwaj/marketAnalysis/clients/moneyControl"
@@ -76,7 +77,7 @@ func readMFTradeFiles(tradebookDir string) (map[ISIN][]MutualFundsTrade, map[Fun
 	tradebook := make(map[ISIN][]MutualFundsTrade) 
 	// avoid magic numbers, instead of 10 it should be index of trade_id
 	for _, record := range tradebookCSV {
-		if record[0] == "symbol" { //suh handling shoul dnot be needed, instead handle using skip header
+		if record[0] == "symbol" { //such handling shoul dnot be needed, instead handle using skip header
 			continue
 		}
 		if _, ok := tradeSet[record[10]]; ok {
@@ -157,8 +158,8 @@ func persistMFInFile(symbol string, trend interface{}) error {
 	return os.WriteFile(fileName, fileContent, os.ModePerm)
 }
 
-// persist call comes from here for mf
 func BuildMFPriceHistoryCache() error {
+<<<<<<< Updated upstream:core/tradebook/MF_cache.go
 	var errorList []string
 	for name, isin := range mutualFundsTradebook.AllFunds {
 		history, err := MC.GetMFHistoryFromMoneyControll(string(isin))
@@ -174,11 +175,53 @@ func BuildMFPriceHistoryCache() error {
 			errorList = append(errorList, fmt.Sprintf("error persisting history for %s, err:%s", isin, err.Error()))
 			continue
 		}
+=======
+	var (
+		mu        sync.Mutex
+		errorList []string
+		wg        sync.WaitGroup
+		semaphore = make(chan struct{}, 5)
+	)
+
+	for name, isin := range MutualFundsTradebookCache.AllFunds {
+		wg.Add(1)
+
+		go func(name FundName, isin ISIN) {
+			defer wg.Done()
+
+			semaphore <- struct{}{}
+			defer func() { <-semaphore }()
+			fmt.Printf("Processing MF: %s\n", name)
+
+			history, err := MC.GetMFHistoryFromMoneyControll(string(isin))
+			if err != nil {
+				mu.Lock()
+				errorList = append(errorList, fmt.Sprintf("error fetching history for MF %s: %s", name, err.Error()))
+				mu.Unlock()
+				return
+			}
+
+			mutualFundsHistory[isin] = history
+
+			if err := persistMFInFile(string(isin), history); err != nil {
+				mu.Lock()
+				errorList = append(errorList, fmt.Sprintf("error persisting history for MF %s: %s", name, err.Error()))
+				mu.Unlock()
+			}
+		}(name, isin)
+>>>>>>> Stashed changes:internal/domain/service/MF_cache.go
 	}
-	if len(errorList) == 0 {
-		return nil
+
+	wg.Wait()
+
+	if len(errorList) > 0 {
+		return fmt.Errorf(strings.Join(errorList, "\n"))
 	}
+<<<<<<< Updated upstream:core/tradebook/MF_cache.go
 	return fmt.Errorf(strings.Join(errorList, "\n"))
+=======
+	return nil
+>>>>>>> Stashed changes:internal/domain/service/MF_cache.go
 }
 
 func buildFundsCacheFromFile(symbol ISIN) ([]models.MFPriceData, error) {
