@@ -6,7 +6,7 @@ import (
 	"github.com/Mryashbhardwaj/marketAnalysis/internal/config"
 )
 
-// initialise immemory database
+// initialise in memory database
 func BuildCache(cfg *config.Config) error { // move this function to utils package
 	mfDir := cfg.MutualFunds.TradeFilesDirectory
 	eqDir := cfg.Equity.TradeFilesDirectory

@@ -208,7 +208,7 @@ func BuildMFPriceHistoryCache() error {
 	wg.Wait()
 
 	if len(errorList) > 0 {
-		return fmt.Errorf(strings.Join(errorList, "\n"))
+		return errors.New(strings.Join(errorList, "\n"))
 	}
 	return nil
 }

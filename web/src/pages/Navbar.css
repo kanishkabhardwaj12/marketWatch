@@ -1,0 +1,59 @@
+/* Basic navbar styles from before */
+.navbar {
+  background: linear-gradient(135deg, #3b82f6, #9333ea);
+  color: white;
+  padding: 15px 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.user-section {
+  position: relative;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.user-photo {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid white;
+}
+.username {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.logout-button {
+  background: none;
+  border: none;
+  padding: 12px 15px;
+  color: #111827;
+  cursor: pointer;
+  text-align: left;
+  font-size: inherit; /* Inherit font size from parent */
+  font-family: inherit; /* Inherit font family */
+  width: 100%;
+}
+
+.logout-button:hover {
+  background: #f3f4f6;
+}
+
+.dropdown {
+  position: absolute;
+  top: 55px; 
+  right: 0;
+  background: white;
+  color: black;
+  padding: 10px;
+  border: 3px solid; 
+  z-index: 9999;
+}
+.dropdown a {
+  color: black;
+  display: block;
+  padding: 5px;
+}
